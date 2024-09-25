@@ -6,11 +6,19 @@ executors:
       - image: circleci/openjdk:11  # Use OpenJDK image with Maven
 
 jobs:
-  test_image:
+  build_and_push:
     executor: test-executor
+    environment:
+      DOCKER_IMAGE: ${DOCKER_IMAGE}                              # Name of the Docker image
+      DOCKER_REPO: ${DOCKER_REPO}                                # Repository name in JFrog
+      DOCKER_TAG: ${CIRCLE_BUILD_NUM}                            # Tag based on CircleCI build number
+      JFROG_BASE_URL: ${JFROG_BASE_URL}                         # JFrog base URL
+      JFROG_USERNAME: ${JFROG_USERNAME}                          # JFrog username
+      JFROG_API_TOKEN: ${JFROG_API_TOKEN}                       # Your actual API token
+      CIRCLE_BUILD_NUM: ${CIRCLE_BUILD_NUM}                     # Automatically provided by CircleCI
     steps:
       - checkout
-      
+
       - run:
           name: Check and Install Docker
           command: |
@@ -59,8 +67,30 @@ jobs:
                 git --version
             fi
 
+      - run:
+          name: Login to JFrog Artifactory
+          command: |
+            echo "Logging into JFrog Artifactory..."
+            echo "${JFROG_API_TOKEN}" | docker login -u "${JFROG_USERNAME}" --password-stdin ${JFROG_BASE_URL}
+
+      - run:
+          name: Build the Maven Project
+          command: mvn clean package  # Adjust based on your actual build command
+
+      - run:
+          name: Tag Docker Image
+          command: |
+            echo "Tagging Docker image..."
+            docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${JFROG_BASE_URL}/${DOCKER_REPO}/${DOCKER_IMAGE}:${DOCKER_TAG}
+
+      - run:
+          name: Push Docker Image to JFrog
+          command: |
+            echo "Pushing Docker image to JFrog Artifactory..."
+            docker push ${JFROG_BASE_URL}/${DOCKER_REPO}/${DOCKER_IMAGE}:${DOCKER_TAG}
+
 workflows:
   version: 2
-  test_workflow:
+  build_and_push_workflow:
     jobs:
-      - test_image
+      - build_and_push
