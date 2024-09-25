@@ -20,24 +20,29 @@ jobs:
       - checkout
 
       - run:
-          name: Install Docker Version 19.03.15
+          name: Install Latest Docker Version
           command: |
             echo "Updating package list..."
             sudo apt-get update
-            
-            # Get the Ubuntu version codename from /etc/os-release
-            if [ -f /etc/os-release ]; then
-                . /etc/os-release
-                UBUNTU_VERSION=$VERSION_ID
-                echo "Detected Ubuntu version: $UBUNTU_VERSION"
-            else
-                echo "OS version information not found!"
-                exit 1
-            fi
 
-            # Install Docker version 19.03.15
-            echo "Installing Docker version 19.03.15..."
-            sudo apt-get install -y docker.io=5:19.03.15~3-0~$UBUNTU_VERSION
+            # Install prerequisites
+            echo "Installing prerequisites..."
+            sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+
+            # Add Docker’s official GPG key
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+            # Set up the stable repository
+            echo "Setting up the Docker repository..."
+            sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+            # Update the package index
+            echo "Updating package index..."
+            sudo apt-get update
+
+            # Install the latest version of Docker
+            echo "Installing the latest version of Docker..."
+            sudo apt-get install -y docker-ce
 
             # Verify installation
             echo "Verifying Docker installation..."
