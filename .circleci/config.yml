@@ -20,29 +20,22 @@ jobs:
       - checkout
 
       - run:
-          name: Check Docker Version and Install if Necessary
+          name: Install Docker Version 19.03.15
           command: |
-            echo "Checking Docker version..."
-            DOCKER_VERSION=$(docker --version | grep -oP '\d+\.\d+\.\d+')
-            MIN_DOCKER_VERSION="19.03.15"
-            IFS='.' read -r -a CURRENT_VERSION <<< "$DOCKER_VERSION"
-            IFS='.' read -r -a REQUIRED_VERSION <<< "$MIN_DOCKER_VERSION"
+            echo "Updating package list..."
+            sudo apt-get update
 
-            if [[ "${CURRENT_VERSION[0]}" -lt "${REQUIRED_VERSION[0]}" ]] || 
-               [[ "${CURRENT_VERSION[0]}" -eq "${REQUIRED_VERSION[0]}" && "${CURRENT_VERSION[1]}" -lt "${REQUIRED_VERSION[1]}" ]] || 
-               [[ "${CURRENT_VERSION[0]}" -eq "${REQUIRED_VERSION[0]}" && "${CURRENT_VERSION[1]}" -eq "${REQUIRED_VERSION[1]}" && "${CURRENT_VERSION[2]}" -lt "${REQUIRED_VERSION[2]}" ]]; then
-              echo "Docker version is below ${MIN_DOCKER_VERSION}. Updating Docker..."
-              
-              # Get the Ubuntu version codename
-              UBUNTU_VERSION=$(lsb_release -c | awk '{print $2}')
-              echo "Detected Ubuntu version: $UBUNTU_VERSION"
+            # Get the Ubuntu version codename
+            UBUNTU_VERSION=$(lsb_release -c | awk '{print $2}')
+            echo "Detected Ubuntu version: $UBUNTU_VERSION"
 
-              # Update the package list and install the required Docker version
-              sudo apt-get update
-              sudo apt-get install -y docker.io=5:19.03.15~3-0~$UBUNTU_VERSION
-            else
-              echo "Docker version is sufficient: $DOCKER_VERSION"
-            fi
+            # Install Docker version 19.03.15
+            echo "Installing Docker version 19.03.15..."
+            sudo apt-get install -y docker.io=5:19.03.15~3-0~$UBUNTU_VERSION
+
+            # Verify installation
+            echo "Verifying Docker installation..."
+            docker --version
 
       - run:
           name: Check OpenJDK Installation
