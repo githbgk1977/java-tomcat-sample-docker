@@ -87,8 +87,9 @@ jobs:
           name: Login to JFrog Artifactory
           command: |
             echo "Logging into JFrog Artifactory..."
-            echo "${JFROG_API_TOKEN}" | docker login -u "${JFROG_USERNAME}" --password-stdin demojfrog1.jfrog.io
-
+            docker login -u "${JFROG_USERNAME}" -p "${JFROG_API_TOKEN}" demojfrog1.jfrog.io
+            #echo "${JFROG_API_TOKEN}" | docker login -u "${JFROG_USERNAME}" --password-stdin demojfrog1.jfrog.io
+            
       - run:
           name: Build the Maven Project
           command: mvn clean package  # Adjust based on your actual build command
