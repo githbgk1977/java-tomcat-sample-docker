@@ -88,7 +88,7 @@ jobs:
           command: |
             echo "Logging into JFrog Artifactory..."
             #docker login -u "${JFROG_USERNAME}" --password-stdin "${JFROG_API_TOKEN}" demojfrog1.jfrog.io
-            echo "${JFROG_API_TOKEN}" | docker login -ugithubgk@gmail.com demojfrog1.jfrog.io
+            echo "${environment.JFROG_API_TOKEN}" | docker login -ugithubgk@gmail.com --password-stdin demojfrog1.jfrog.io
             
       - run:
           name: Build the Maven Project
