@@ -24,10 +24,16 @@ jobs:
           command: |
             echo "Updating package list..."
             sudo apt-get update
-
-            # Get the Ubuntu version codename
-            UBUNTU_VERSION=$(lsb_release -c | awk '{print $2}')
-            echo "Detected Ubuntu version: $UBUNTU_VERSION"
+            
+            # Get the Ubuntu version codename from /etc/os-release
+            if [ -f /etc/os-release ]; then
+                . /etc/os-release
+                UBUNTU_VERSION=$VERSION_ID
+                echo "Detected Ubuntu version: $UBUNTU_VERSION"
+            else
+                echo "OS version information not found!"
+                exit 1
+            fi
 
             # Install Docker version 19.03.15
             echo "Installing Docker version 19.03.15..."
