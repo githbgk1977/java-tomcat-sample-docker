@@ -1,43 +1,62 @@
-# This config was automatically generated from your source code
-# Stacks detected: cicd:jenkins:.,deps:java:.
 version: 2.1
-jobs:
-  test-java:
+
+executors:
+  test-executor:
     docker:
-      - image: cimg/openjdk:17.0
+      - image: circleci/docker:20.10.7  # Base image to test
+
+jobs:
+  test_image:
+    executor: test-executor
     steps:
       - checkout
       - run:
-          name: Calculate cache key
-          command: |-
-            find . -name 'pom.xml' -o -name 'gradlew*' -o -name '*.gradle*' | \
-                    sort | xargs cat > /tmp/CIRCLECI_CACHE_KEY
-      - restore_cache:
-          key: cache-{{ checksum "/tmp/CIRCLECI_CACHE_KEY" }}
-      - run:
-          command: mvn verify
-      - store_test_results:
-          path: target/surefire-reports
-      - save_cache:
-          key: cache-{{ checksum "/tmp/CIRCLECI_CACHE_KEY" }}
-          paths:
-            - ~/.m2/repository
-  deploy:
-    # This is an example deploy job, not actually used by the workflow
-    docker:
-      - image: cimg/base:stable
-    steps:
-      # Replace this with steps to deploy to users
-      - run:
-          name: deploy
-          command: '#e.g. ./deploy.sh'
-      - run:
-          name: found jenkins config
-          command: ':'
+          name: Verify Installed Tools
+          command: |
+            echo "Checking Docker image and installed tools..."
+            
+            # Check Docker version
+            echo "Checking Docker..."
+            if command -v docker &> /dev/null
+            then
+                echo "Docker is installed."
+                docker --version
+            else
+                echo "Docker is not installed."
+            fi
+
+            # Check Java version (OpenJDK)
+            echo "Checking OpenJDK..."
+            if command -v java &> /dev/null
+            then
+                echo "OpenJDK is installed."
+                java -version
+            else
+                echo "OpenJDK is not installed."
+            fi
+
+            # Check Maven
+            echo "Checking Maven..."
+            if command -v mvn &> /dev/null
+            then
+                echo "Maven is installed."
+                mvn -v
+            else
+                echo "Maven is not installed."
+            fi
+
+            # Check Git
+            echo "Checking Git..."
+            if command -v git &> /dev/null
+            then
+                echo "Git is installed."
+                git --version
+            else
+                echo "Git is not installed."
+            fi
+
 workflows:
-  build-and-test:
+  version: 2
+  test_workflow:
     jobs:
-      - test-java
-    # - deploy:
-    #     requires:
-    #       - test-java
+      - test_image
