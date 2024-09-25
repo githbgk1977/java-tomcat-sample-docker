@@ -3,7 +3,7 @@ version: 2.1
 executors:
   test-executor:
     docker:
-      - image: circleci/openjdk:11  # Use OpenJDK image with Maven
+      - image: circleci/openjdk:11  # Use OpenJDK  image with Maven
 
 jobs:
   build_and_push:
