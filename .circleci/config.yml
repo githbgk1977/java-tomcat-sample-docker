@@ -3,56 +3,60 @@ version: 2.1
 executors:
   test-executor:
     docker:
-      - image: circleci/docker:20.10.7  # Base image to test
+      - image: circleci/openjdk:11  # Use OpenJDK image with Maven
 
 jobs:
   test_image:
     executor: test-executor
     steps:
       - checkout
+      
       - run:
-          name: Verify Installed Tools
+          name: Check and Install Docker
           command: |
-            echo "Checking Docker image and installed tools..."
-            
-            # Check Docker version
-            echo "Checking Docker..."
-            if command -v docker &> /dev/null
-            then
-                echo "Docker is installed."
+            echo "Checking Docker installation..."
+            if ! command -v docker &> /dev/null; then
+                echo "Docker is not installed. Installing Docker..."
+                sudo apt-get update
+                sudo apt-get install -y docker.io
+            else
+                echo "Docker is already installed."
                 docker --version
-            else
-                echo "Docker is not installed."
             fi
 
-            # Check Java version (OpenJDK)
-            echo "Checking OpenJDK..."
-            if command -v java &> /dev/null
-            then
-                echo "OpenJDK is installed."
+      - run:
+          name: Check OpenJDK Installation
+          command: |
+            echo "Checking OpenJDK installation..."
+            if ! command -v java &> /dev/null; then
+                echo "OpenJDK is not installed. Please install it."
+            else
+                echo "OpenJDK is already installed."
                 java -version
-            else
-                echo "OpenJDK is not installed."
             fi
 
-            # Check Maven
-            echo "Checking Maven..."
-            if command -v mvn &> /dev/null
-            then
-                echo "Maven is installed."
+      - run:
+          name: Check Maven Installation
+          command: |
+            echo "Checking Maven installation..."
+            if ! command -v mvn &> /dev/null; then
+                echo "Maven is not installed. Please install it."
+            else
+                echo "Maven is already installed."
                 mvn -v
-            else
-                echo "Maven is not installed."
             fi
 
-            # Check Git
-            echo "Checking Git..."
-            if command -v git &> /dev/null
-            then
-                echo "Git is installed."
-                git --version
+      - run:
+          name: Check Git Installation
+          command: |
+            echo "Checking Git installation..."
+            if ! command -v git &> /dev/null; then
+                echo "Git is not installed. Installing Git..."
+                sudo apt-get update
+                sudo apt-get install -y git
             else
-                echo "Git is not installed."
+                echo "Git is already installed."
+                git --version
             fi
 
 workflows:
