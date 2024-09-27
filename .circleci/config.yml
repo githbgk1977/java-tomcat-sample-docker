@@ -3,51 +3,73 @@ version: 2.1
 executors:
   test-executor:
     docker:
-      - image: cimg/openjdk:15.0  # Use OpenJDK 15 image for building
+      - image: cimg/openjdk:15.0  # Use OpenJDK 15 image
 
 jobs:
   build_and_push:
     executor: test-executor
-    environment:
-      DOCKER_IMAGE: "java-tomcat-sample"  # Change this to a valid lower-case image name
-      DOCKER_REPO: "${DOCKER_REPO}"        # Repository name in JFrog
-      JFROG_BASE_URL: "${JFROG_BASE_URL}"  # JFrog base URL
-      JFROG_USERNAME: "${JFROG_USERNAME}"   # JFrog username
-      JFROG_API_TOKEN: "${JFROG_API_TOKEN}" # Your actual API token
-
     steps:
       - checkout
 
       - run:
-          name: Set Up Environment Variables
+          name: Install Docker
           command: |
-            export DOCKER_TAG="${CIRCLE_BUILD_NUM}"  # Set the Docker tag
-            echo "DOCKER_IMAGE: ${DOCKER_IMAGE}"
-            echo "DOCKER_TAG: ${DOCKER_TAG}"
-            if [[ -z "${DOCKER_IMAGE}" || -z "${DOCKER_TAG}" ]]; then
-              echo "Error: DOCKER_IMAGE or DOCKER_TAG is not set."
-              exit 1
-            fi
+            echo "Updating package list..."
+            sudo apt-get update
+
+            # Install Docker prerequisites
+            echo "Installing Docker prerequisites..."
+            sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+
+            # Add Docker's official GPG key
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+            # Set up the stable repository for Docker
+            echo "Setting up Docker repository..."
+            echo \
+              "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+              $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+            # Update the package index
+            echo "Updating package index..."
+            sudo apt-get update
+
+            # Install Docker
+            echo "Installing Docker..."
+            sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+
+            # Verify Docker installation
+            echo "Verifying Docker installation..."
+            docker --version
 
       - run:
           name: Build Docker Image
           command: |
             echo "Building Docker image..."
-            IMAGE_TAG="${DOCKER_IMAGE}:${DOCKER_TAG}"
+            DOCKER_IMAGE="tomcat:8.0"  # Hardcoded Tomcat base image
+            IMAGE_NAME="java-tomcat-sample" # Name of the image you want to tag
+            DOCKER_TAG="latest"          # Tag for the image
+            IMAGE_TAG="${IMAGE_NAME}:${DOCKER_TAG}"  # Tag for the local image
             echo "Final Docker image tag: ${IMAGE_TAG}"
+
+            # Build the Docker image using the Dockerfile
             docker build -t "${IMAGE_TAG}" .
 
       - run:
-          name: Tag Docker Image
+          name: List Docker Images
           command: |
-            echo "Tagging Docker image..."
-            docker tag "${DOCKER_IMAGE}:${DOCKER_TAG}" "${JFROG_BASE_URL}/${DOCKER_REPO}/${DOCKER_IMAGE}:${DOCKER_TAG}"
+            echo "Listing Docker images to verify build..."
+            docker images
 
-      - run:
-          name: Push Docker Image to JFrog
-          command: |
-            echo "Pushing Docker image to JFrog Artifactory..."
-            docker push "${JFROG_BASE_URL}/${DOCKER_REPO}/${DOCKER_IMAGE}:${DOCKER_TAG}"
+      # Uncomment below if you wish to push the image to JFrog
+      # - run:
+      #     name: Push Docker Image to JFrog
+      #     command: |
+      #       echo "Pushing Docker image to JFrog Artifactory..."
+      #       echo "Logging into JFrog..."
+      #       echo "${JFROG_API_TOKEN}" | docker login ${JFROG_BASE_URL} -u "${JFROG_USERNAME}" --password-stdin
+      #
+      #       docker push "${IMAGE_TAG}"
 
 workflows:
   version: 2
