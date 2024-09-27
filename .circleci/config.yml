@@ -9,7 +9,7 @@ jobs:
   build_and_push:
     executor: test-executor
     environment:
-      DOCKER_IMAGE: ${DOCKER_IMAGE:-"tomcat:8.0"}  # Default to tomcat:8.0 if not set
+      DOCKER_IMAGE: "java-tomcat-sample"  # Use your desired image name
       DOCKER_REPO: ${DOCKER_REPO}
       DOCKER_TAG: ${CIRCLE_BUILD_NUM}  # Tag based on CircleCI build number
       JFROG_BASE_URL: ${JFROG_BASE_URL}
