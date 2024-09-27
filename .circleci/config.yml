@@ -3,7 +3,7 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-      - image: cimg/openjdk:15.0   # Use OpenJDK 17 image based on CircleCI
+      - image: cimg/openjdk:15.0  # Use OpenJDK 15 image based on CircleCI
 
 jobs:
   build_and_push:
@@ -50,16 +50,6 @@ jobs:
             # Verify Docker installation
             echo "Verifying Docker installation..."
             docker --version
-
-      - run:
-          name: Start Docker Daemon
-          command: |
-            sudo systemctl start docker
-
-      - run:
-          name: Verify Docker Daemon
-          command: |
-            sudo systemctl status docker || echo "Docker is not running"
 
       - run:
           name: Build the Maven Project
