@@ -9,9 +9,8 @@ jobs:
   build_and_push:
     executor: test-executor
     environment:
-      DOCKER_IMAGE: "java-tomcat-sample"  # Image name in your repository
+      DOCKER_IMAGE: "java-tomcat-sample"  # Change this to a valid lower-case image name
       DOCKER_REPO: "${DOCKER_REPO}"        # Repository name in JFrog
-      DOCKER_TAG: "${CIRCLE_BUILD_NUM}"    # Tag based on CircleCI build number
       JFROG_BASE_URL: "${JFROG_BASE_URL}"  # JFrog base URL
       JFROG_USERNAME: "${JFROG_USERNAME}"   # JFrog username
       JFROG_API_TOKEN: "${JFROG_API_TOKEN}" # Your actual API token
@@ -20,8 +19,9 @@ jobs:
       - checkout
 
       - run:
-          name: Validate Docker Image and Tag
+          name: Set Up Environment Variables
           command: |
+            export DOCKER_TAG="${CIRCLE_BUILD_NUM}"  # Set the Docker tag
             echo "DOCKER_IMAGE: ${DOCKER_IMAGE}"
             echo "DOCKER_TAG: ${DOCKER_TAG}"
             if [[ -z "${DOCKER_IMAGE}" || -z "${DOCKER_TAG}" ]]; then
@@ -33,7 +33,9 @@ jobs:
           name: Build Docker Image
           command: |
             echo "Building Docker image..."
-            docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+            IMAGE_TAG="${DOCKER_IMAGE}:${DOCKER_TAG}"
+            echo "Final Docker image tag: ${IMAGE_TAG}"
+            docker build -t "${IMAGE_TAG}" .
 
       - run:
           name: Tag Docker Image
