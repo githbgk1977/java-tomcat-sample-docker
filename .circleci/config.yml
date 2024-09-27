@@ -3,19 +3,18 @@ version: 2.1
 executors:
   test-executor:
     docker:
-      - image: cimg/openjdk:15.0  # Use OpenJDK 15 image based on Ubuntu
+      - image: cimg/openjdk:15.0  # Use OpenJDK 15 image for building
 
 jobs:
   build_and_push:
     executor: test-executor
     environment:
-      DOCKER_IMAGE: "java-tomcat-sample"  # Use your desired image name
-      DOCKER_REPO: ${DOCKER_REPO}
-      DOCKER_TAG: ${CIRCLE_BUILD_NUM}  # Tag based on CircleCI build number
-      JFROG_BASE_URL: ${JFROG_BASE_URL}
-      JFROG_USERNAME: ${JFROG_USERNAME}
-      JFROG_API_TOKEN: ${JFROG_API_TOKEN}
-      CIRCLE_BUILD_NUM: ${CIRCLE_BUILD_NUM}
+      DOCKER_IMAGE: "java-tomcat-sample"  # Image name in your repository
+      DOCKER_REPO: "${DOCKER_REPO}"        # Repository name in JFrog
+      DOCKER_TAG: "${CIRCLE_BUILD_NUM}"    # Tag based on CircleCI build number
+      JFROG_BASE_URL: "${JFROG_BASE_URL}"  # JFrog base URL
+      JFROG_USERNAME: "${JFROG_USERNAME}"   # JFrog username
+      JFROG_API_TOKEN: "${JFROG_API_TOKEN}" # Your actual API token
 
     steps:
       - checkout
@@ -34,19 +33,19 @@ jobs:
           name: Build Docker Image
           command: |
             echo "Building Docker image..."
-            docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+            docker build -t "${DOCKER_IMAGE}:${DOCKER_TAG}" .
 
       - run:
           name: Tag Docker Image
           command: |
             echo "Tagging Docker image..."
-            docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${JFROG_BASE_URL}/${DOCKER_REPO}/${DOCKER_IMAGE}:${DOCKER_TAG}
+            docker tag "${DOCKER_IMAGE}:${DOCKER_TAG}" "${JFROG_BASE_URL}/${DOCKER_REPO}/${DOCKER_IMAGE}:${DOCKER_TAG}"
 
       - run:
           name: Push Docker Image to JFrog
           command: |
             echo "Pushing Docker image to JFrog Artifactory..."
-            docker push ${JFROG_BASE_URL}/${DOCKER_REPO}/${DOCKER_IMAGE}:${DOCKER_TAG}
+            docker push "${JFROG_BASE_URL}/${DOCKER_REPO}/${DOCKER_IMAGE}:${DOCKER_TAG}"
 
 workflows:
   version: 2
