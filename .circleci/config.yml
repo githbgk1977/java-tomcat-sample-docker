@@ -1,13 +1,15 @@
 version: 2.1
 
 executors:
-  docker-executor:
+  custom-executor:
     docker:
-      - image: cimg/openjdk:15.0  # Use OpenJDK 15 image based on CircleCI
+      - image: cimg/openjdk:17.0  # Using CircleCI's OpenJDK 17 image for flexibility
+        environment:
+          DOCKER_HOST: tcp://docker:2375  # Pointing to Docker service
 
 jobs:
   build_and_push:
-    executor: docker-executor
+    executor: custom-executor
     environment:
       DOCKER_IMAGE: tomcat:8.0                                        # Name of the Docker image
       DOCKER_REPO: ${DOCKER_REPO}                                     # Repository name in JFrog
@@ -21,35 +23,12 @@ jobs:
       - checkout
 
       - run:
-          name: Install Docker
+          name: Install Dependencies
           command: |
-            echo "Updating package list..."
-            sudo apt-get update
-            
-            # Install prerequisites
-            echo "Installing prerequisites..."
-            sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
-
-            # Add Docker's official GPG key
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-
-            # Set up the stable repository for Ubuntu
-            echo "Setting up Docker repository for Ubuntu..."
-            echo \
-              "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-              $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-            # Update the package index again
-            echo "Updating package index..."
-            sudo apt-get update
-
-            # Install the latest version of Docker
-            echo "Installing the latest version of Docker..."
-            sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-
-            # Verify Docker installation
-            echo "Verifying Docker installation..."
-            docker --version
+            echo "Installing dependencies..."
+            sudo apt-get update && sudo apt-get install -y npm
+            # Install Snyk or any other tools you need
+            npm install -g snyk
 
       - run:
           name: Build the Maven Project
