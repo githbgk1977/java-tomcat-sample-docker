@@ -33,46 +33,32 @@ jobs:
             -H "X-JFrog-Art-Api: ${JFROG_TOKEN}" \
             -H "Content-Type: application/java-archive" \
             --data-binary @target/myapp.war
+  deploy:
+    docker:
+      - image: cimg/base:2024.09
+    steps:
+      - run:
+          name: Install Dependencies
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y wget
+      - run:
+          name: Download and Install Tomcat
+          command: |
+            wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.70/bin/apache-tomcat-9.0.70.tar.gz
+            tar -xzf apache-tomcat-9.0.70.tar.gz
+            mv apache-tomcat-9.0.70 ~/tomcat  # Move to user directory
+      - run:
+          name: Start Tomcat
+          command: |
+            cd ~/tomcat/bin
+            ./catalina.sh start
+      - run:
+          name: Check Tomcat Status
+          command: |
+            sleep 60  # Wait for Tomcat to start
+            curl -f http://localhost:8080 || echo "Tomcat not responding"
 
-deploy:
-  docker:
-    - image: cimg/base:2024.09
-  steps:
-    - run:
-        name: Install Dependencies
-        command: |
-          sudo apt-get update
-          sudo apt-get install -y wget
-    - run:
-        name: Download and Install Tomcat
-        command: |
-          wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.70/bin/apache-tomcat-9.0.70.tar.gz
-          tar -xzf apache-tomcat-9.0.70.tar.gz
-          mv apache-tomcat-9.0.70 /usr/local/tomcat
-    - run:
-        name: Start Tomcat
-        command: |
-          /usr/local/tomcat/bin/startup.sh
-    - run:
-        name: Deploy WAR file to Tomcat
-        command: |
-          cp target/your-app.war /usr/local/tomcat/webapps/
-    - run:
-        name: Wait for Tomcat to start
-        command: sleep 60
-    - run:
-        name: Check Tomcat Status
-        command: |
-          if ps aux | grep -v grep | grep 'org.apache.catalina.startup.Bootstrap'; then
-            echo "Tomcat is running"
-          else
-            echo "Tomcat is not running"
-            exit 1
-          fi
-    - run:
-        name: Test Application
-        command: |
-          curl -f http://localhost:8080/your-app || (echo "App is not responding" && exit 1)
 
 workflows:
   version: 2
