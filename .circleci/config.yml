@@ -36,44 +36,37 @@ jobs:
 
   deploy:
     docker:
-      - image: cimg/base:2024.09
+      - image: cimg/base
     steps:
-      - run:
-          name: Download WAR from JFrog Artifactory
-          command: |
-            curl -X GET "https://demojfrog1.jfrog.io/artifactory/tomcatapp/myapp.war" \
-            -H "X-JFrog-Art-Api: ${JFROG_TOKEN}" \
-            -o myapp.war
-
+      - checkout
       - run:
           name: Install Tomcat
           command: |
             sudo apt-get update
-            sudo apt-get install -y tomcat
-
-      - run:
-          name: Deploy WAR File to Tomcat
-          command: |
-            sudo cp myapp.war /var/lib/tomcat/webapps/
-
+            sudo apt-get install -y tomcat9
       - run:
           name: Start Tomcat
-          command: |
-            sudo systemctl start tomcat
-
+          command: sudo systemctl start tomcat9
       - run:
-          name: Wait for Tomcat to Start
+          name: Deploy WAR file to Tomcat
+          command: |
+            sudo cp target/your-app.war /opt/tomcat/webapps/
+      - run:
+          name: Wait for Tomcat to start
           command: sleep 60
-
       - run:
           name: Check Tomcat Status
           command: |
-            if curl -I http://localhost:8080/myapp; then
-              echo "Tomcat is up and running!";
+            if systemctl status tomcat9; then
+              echo "Tomcat is running"
             else
-              echo "Tomcat is not responding!";
-              exit 1;
+              echo "Tomcat is not running"
+              exit 1
             fi
+      - run:
+          name: Test Application
+          command: |
+            curl -f http://localhost:8080/your-app || (echo "App is not responding" && exit 1)
 
 workflows:
   version: 2
