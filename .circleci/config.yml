@@ -3,42 +3,43 @@ version: 2.1
 executors:
   docker-executor:
     docker:
-      - image: cimg/openjdk:15.0
+      - image: cimg/openjdk:15.0  # Your base image
+    working_directory: ~/repo
+    resource_class: medium
 
 jobs:
   build:
     executor: docker-executor
     steps:
       - checkout
-
       - run:
-          name: Check for Docker
-          command: docker --version || { echo "Docker is not installed"; exit 1; }
+          name: Install Docker 24
+          command: |
+            sudo apt-get update
+            sudo apt-get remove docker docker-engine docker.io containerd runc  # Remove old versions
+            sudo apt-get install -y \
+              ca-certificates \
+              curl \
+              gnupg \
+              lsb-release
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+            sudo apt-get update
+            sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+            docker --version  # Confirm Docker 24 is installed
 
       - setup_remote_docker:
-          version: 24
-          docker_layer_caching: true
-      - run:
-          name: Build Application
-          command: mvn -f pom.xml clean package
+          version: 24.0.0  # Ensure remote Docker uses the correct version
 
       - run:
           name: Build Docker Image
           command: |
-            docker build -t githbgk/tomcat:your-tag-name .
-
-      - run:
-          name: Log in to Docker Hub
-          command: |
-            echo "$DOCKER_HUB_PASS" | docker login -u "$DOCKER_HUB_USER" --password-stdin
-
-      - run:
-          name: Push Docker Image to Docker Hub
-          command: |
-            docker push githbgk/tomcat:your-tag-name
+            docker build . -t tomcat:latest
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push your_image_name:latest
 
 workflows:
   version: 2
-  build_and_deploy:
+  build-and-push:
     jobs:
       - build
