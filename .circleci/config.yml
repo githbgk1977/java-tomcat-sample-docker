@@ -9,7 +9,7 @@ jobs:
     steps:
       - checkout
 
-      # Install necessary tools like Maven, wget, curl
+      # Install necessary tools like Maven, wget, and curl
       - run:
           name: Install Required Tools
           command: |
@@ -38,12 +38,13 @@ jobs:
     docker:
       - image: githbgk/cimg_base2022.09  # Using the same Docker image for consistency
     steps:
-      # Install necessary tools
+      # Install necessary tools including OpenJDK and Tomcat
       - run:
           name: Install Required Tools
           command: |
             sudo apt-get update
-            sudo apt-get install -y wget openjdk-11-jdk  # Install OpenJDK 11
+            sudo apt-get install -y wget openjdk-11-jdk tomcat9  # Install OpenJDK 11 and Tomcat
+
       - run:
           name: Set JAVA_HOME
           command: |
@@ -51,22 +52,17 @@ jobs:
             echo "export JRE_HOME=$JAVA_HOME" >> $BASH_ENV
             echo "export PATH=\$PATH:\$JAVA_HOME/bin" >> $BASH_ENV
             source $BASH_ENV  # Source the environment variables
-      - run:
-          name: Download and Install Tomcat
-          command: |
-            wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.95/bin/apache-tomcat-9.0.95.tar.gz
-            tar -xzf apache-tomcat-9.0.95.tar.gz
-            mv apache-tomcat-9.0.95 ~/tomcat  # Move to user directory
+
       - run:
           name: Start Tomcat
           command: |
-            cd ~/tomcat/bin
-            ./catalina.sh start
+            sudo systemctl start tomcat9  # Start Tomcat using systemctl
+          
       - run:
           name: Check Tomcat Logs
           command: |
             sleep 60  # Wait for Tomcat to start
-            log_file=$(find ~/tomcat -name "catalina.out" 2>/dev/null)  # Find the log file
+            log_file=$(find /var/log/tomcat9 -name "catalina.out" 2>/dev/null)  # Find the log file
             if [ -n "$log_file" ]; then
               tail -n 50 "$log_file"
             else
