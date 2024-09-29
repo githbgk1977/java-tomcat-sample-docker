@@ -16,7 +16,7 @@ jobs:
           command: docker --version || { echo "Docker is not installed"; exit 1; }
 
       - setup_remote_docker:
-          version: 20.10.7
+          version: 24
           docker_layer_caching: true
       - run:
           name: Build Application
