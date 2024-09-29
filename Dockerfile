@@ -2,10 +2,10 @@
 FROM cimg/openjdk:15.0
 
 # Install wget
-RUN apt-get update && apt-get install -y wget
+#RUN apt-get update && apt-get install -y wget
 
 # Install Tomcat 9.0.95
-RUN wget -q https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.95/bin/apache-tomcat-9.0.95.tar.gz && \
+RUN sudo wget -q https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.95/bin/apache-tomcat-9.0.95.tar.gz && \
     tar xzf apache-tomcat-9.0.95.tar.gz && \
     mv apache-tomcat-9.0.95 /usr/local/tomcat && \
     rm apache-tomcat-9.0.95.tar.gz
