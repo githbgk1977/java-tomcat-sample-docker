@@ -42,11 +42,35 @@ jobs:
             echo "Verifying Docker installation..."
             docker --version
 
+            # Start Docker service if not running
+            sudo systemctl start docker || echo "Docker is already running."
+
+      - run:
+          name: Validate Docker Daemon
+          command: |
+            # Check if Docker is using Unix socket or TCP
+            echo "Validating Docker Daemon connection..."
+
+            # Check the Docker daemon configuration
+            if [ -S /var/run/docker.sock ]; then
+              echo "Docker is using Unix socket."
+            else
+              echo "Docker is NOT using Unix socket. Checking if TCP socket is enabled..."
+              if curl --unix-socket /var/run/docker.sock http://localhost/_ping 2>/dev/null; then
+                echo "Docker daemon is reachable via Unix socket."
+              else
+                echo "Docker daemon is not reachable. Please check Docker installation or socket configuration."
+                exit 1
+              fi
+            fi
+
+            echo "Docker validation completed successfully."
+
       - run:
           name: Build Docker Image
           command: |
             echo "Building Docker image..."
-            DOCKER_IMAGE="tomcat:9.0"  # Hardcoded Tomcat base image
+            DOCKER_IMAGE="tomcat:8.0"  # Hardcoded Tomcat base image
             IMAGE_NAME="java-tomcat-sample" # Name of the image you want to tag
             DOCKER_TAG="latest"          # Tag for the image
             IMAGE_TAG="${IMAGE_NAME}:${DOCKER_TAG}"  # Tag for the local image
