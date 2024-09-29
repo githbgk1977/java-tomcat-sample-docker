@@ -1,23 +1,20 @@
 version: 2.1
 
-executors:
-  default:
-    docker:
-      - image: cimg/base:2024.09  # Base image for all required tools
-    working_directory: ~/repo
-
 jobs:
   build:
-    executor: default
+    docker:
+      - image: circleci/openjdk:15  # Use CircleCI OpenJDK 15 image
+    working_directory: ~/repo
+
     steps:
       - checkout
-      
-      # Install necessary tools like OpenJDK, Maven, wget, curl, and Docker
+
+      # Install necessary tools like Maven, wget, curl
       - run:
           name: Install Required Tools
           command: |
             sudo apt-get update
-            sudo apt-get install -y openjdk-11-jdk maven wget curl docker.io
+            #sudo apt-get install -y maven wget curl
       
       # Verify the installation of Java
       - run:
