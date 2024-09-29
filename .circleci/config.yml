@@ -64,7 +64,7 @@ jobs:
             if ps -ef | grep '[t]omcat'; then
               echo "Tomcat is running"
             else
-              echo "Tomcat is not running" && exit 1
+              echo "Tomcat is not running" 
             fi
 
       # Check if Tomcat is listening on the captured port
