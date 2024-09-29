@@ -1,53 +1,44 @@
 version: 2.1
 
 executors:
-  build-executor:
+  docker-executor:
     docker:
-      - image: cimg/openjdk:15.0  # Image for building
-
-  publish-executor:
-    docker:
-      - image: tomcat:9.0          # Image for publishing
+      - image: cimg/openjdk:15.0  # Use CircleCI's base image with OpenJDK
+    working_directory: ~/repo
 
 jobs:
   build:
-    executor: build-executor
+    executor: docker-executor
     steps:
-      - checkout
+      - checkout  # Check out the code from your repo
 
+      # Build the application using Maven
       - run:
-          name: Build Custom Docker Image with Tomcat
-          command: |
-            echo "Building custom Docker image with Tomcat..."
-            DOCKER_IMAGE_NAME="java-tomcat-sample"  # Name of the image you want to tag
-            DOCKER_TAG="latest"                      # Tag for the image
-            IMAGE_TAG="${DOCKER_IMAGE_NAME}:${DOCKER_TAG}"  # Tag for the local image
-            echo "Final Docker image tag: ${IMAGE_TAG}"
+          name: Build Application
+          command: mvn clean package  # Adjust according to your Maven configuration
 
-            # Build the Docker image using the Dockerfile
-            docker build -t "${IMAGE_TAG}" .
-
+      # Archive the WAR artifacts
       - run:
-          name: List Docker Images
+          name: Archive Artifacts
           command: |
-            echo "Listing Docker images to verify build..."
-            docker images
+            mkdir -p artifacts  # Create an artifacts directory
+            cp target/*.war artifacts/  # Copy WAR files to the artifacts directory
 
-  publish:
-    executor: publish-executor
-    steps:
+      # Create Docker Image for Tomcat
       - run:
-          name: Deploy Application to Tomcat
+          name: Create Tomcat Docker Image
           command: |
-            echo "Deploying application to Tomcat..."
-            DOCKER_IMAGE_NAME="java-tomcat-sample"  # Ensure this matches the built image name
-            docker run -d -p 8090:8080 "${DOCKER_IMAGE_NAME}"
+            docker build -t tomcatsamplewebapp:${CIRCLE_BUILD_NUM} .  # Use CircleCI build number as tag
+
+      # Optional: Push Docker Image to a Registry
+      - run:
+          name: Push Docker Image
+          command: |
+            echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin  # Log in to Docker registry
+            docker push tomcatsamplewebapp:${CIRCLE_BUILD_NUM}  # Push the Docker image
 
 workflows:
   version: 2
-  build_and_publish_workflow:
+  build-and-deploy:
     jobs:
       - build
-      - publish:
-          requires:
-            - build
