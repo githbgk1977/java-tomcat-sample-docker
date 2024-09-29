@@ -6,9 +6,9 @@ FROM cimg/openjdk:15.0
 
 # Install Tomcat 9.0.95
 RUN sudo wget -q https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.95/bin/apache-tomcat-9.0.95.tar.gz && \
-    tar xzf apache-tomcat-9.0.95.tar.gz && \
-    mv apache-tomcat-9.0.95 /usr/local/tomcat && \
-    rm apache-tomcat-9.0.95.tar.gz
+    sudo tar xzf apache-tomcat-9.0.95.tar.gz && \
+    sudo mv apache-tomcat-9.0.95 /usr/local/tomcat && \
+    sudo rm apache-tomcat-9.0.95.tar.gz
 
 # Add your WAR file to the webapps directory
 ADD **/*.war /usr/local/tomcat/webapps/
