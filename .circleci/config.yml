@@ -42,7 +42,7 @@ jobs:
           name: Install Tomcat
           command: |
             sudo apt-get update
-            sudo apt-get install -y tomcat9
+            apt-get install -y tomcat9
       - run:
           name: Start Tomcat
           command: |
