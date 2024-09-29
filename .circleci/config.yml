@@ -1,45 +1,60 @@
 version: 2.1
 
 executors:
-  docker-executor:
+  default:
     docker:
-      - image: cimg/openjdk:21.0.2  # Your base image
+      - image: cimg/base:2024.09  # Base image for all required tools
     working_directory: ~/repo
-    resource_class: medium
 
 jobs:
   build:
-    executor: docker-executor
+    executor: default
     steps:
       - checkout
+      
+      # Install necessary tools like OpenJDK, Maven, wget, curl, and Docker
       - run:
-          name: Install Docker 24
+          name: Install Required Tools
           command: |
             sudo apt-get update
-            sudo apt-get remove docker docker-engine docker.io containerd runc  # Remove old versions
-            sudo apt-get install -y \
-              ca-certificates \
-              curl \
-              gnupg \
-              lsb-release
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-            sudo apt-get update
-            sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-            docker --version  # Confirm Docker 24 is installed
-
-      - setup_remote_docker:
-          version: 24.0.0  # Ensure remote Docker uses the correct version
-
+            sudo apt-get install -y openjdk-11-jdk maven wget curl docker.io
+      
+      # Verify the installation of Java
       - run:
-          name: Build Docker Image
+          name: Verify Java Installation
+          command: java -version
+      
+      # Build the application using Maven
+      - run:
+          name: Build the Application
+          command: mvn clean package
+      
+      # Install and configure Tomcat
+      - run:
+          name: Install Tomcat
           command: |
-            docker build . -t tomcat:latest
-            docker login -u $DOCKER_USER -p $DOCKER_PASS
-            docker push your_image_name:latest
+            wget https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.30/bin/apache-tomcat-10.1.30.tar.gz
+            tar xzf apache-tomcat-10.1.30.tar.gz
+            mv apache-tomcat-10.1.30 ~/tomcat
+            rm apache-tomcat-10.1.30.tar.gz
+            chmod +x ~/tomcat/bin/*.sh
+      
+      # Deploy the WAR file to Tomcat (assuming the .war file is created during the build process)
+      - run:
+          name: Deploy to Tomcat
+          command: |
+            cp target/*.war ~/tomcat/webapps/
+      
+      # Start Tomcat
+      - run:
+          name: Start Tomcat Server
+          command: |
+            ~/tomcat/bin/startup.sh
+            sleep 10  # Wait for Tomcat to start
+            curl -I http://localhost:8080
 
 workflows:
   version: 2
-  build-and-push:
+  build_and_deploy:
     jobs:
       - build
