@@ -46,7 +46,7 @@ jobs:
           name: Build Docker Image
           command: |
             echo "Building Docker image..."
-            DOCKER_IMAGE="tomcat:8.0"  # Hardcoded Tomcat base image
+            DOCKER_IMAGE="tomcat:9.0"  # Hardcoded Tomcat base image
             IMAGE_NAME="java-tomcat-sample" # Name of the image you want to tag
             DOCKER_TAG="latest"          # Tag for the image
             IMAGE_TAG="${IMAGE_NAME}:${DOCKER_TAG}"  # Tag for the local image
