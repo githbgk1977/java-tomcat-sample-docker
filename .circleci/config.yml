@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: cimg/openjdk:21.0.2  # Use CircleCI OpenJDK 15 image
+      - image: circleci/openjdk:15  # Use CircleCI OpenJDK 15 image
     working_directory: ~/repo
 
     steps:
@@ -14,18 +14,18 @@ jobs:
           name: Install Required Tools
           command: |
             sudo apt-get update
-            #sudo apt-get install -y maven wget curl
-      
+            sudo apt-get install -y maven wget curl
+
       # Verify the installation of Java
       - run:
           name: Verify Java Installation
           command: java -version
-      
+
       # Build the application using Maven
       - run:
           name: Build the Application
           command: mvn clean package
-      
+
       # Install and configure Tomcat
       - run:
           name: Install Tomcat
@@ -35,20 +35,26 @@ jobs:
             mv apache-tomcat-10.1.30 ~/tomcat
             rm apache-tomcat-10.1.30.tar.gz
             chmod +x ~/tomcat/bin/*.sh
-      
-      # Deploy the WAR file to Tomcat (assuming the .war file is created during the build process)
+
+      # Deploy the WAR file to Tomcat
       - run:
           name: Deploy to Tomcat
           command: |
             cp target/*.war ~/tomcat/webapps/
-      
+
       # Start Tomcat
       - run:
           name: Start Tomcat Server
           command: |
             ~/tomcat/bin/startup.sh
             sleep 10  # Wait for Tomcat to start
-            curl -I http://localhost:8080
+
+      # Capture Tomcat status using curl
+      - run:
+          name: Capture Tomcat Status
+          command: |
+            curl -I http://localhost:8080 > tomcat_status.txt
+            cat tomcat_status.txt  # Print the status to CircleCI output
 
 workflows:
   version: 2
