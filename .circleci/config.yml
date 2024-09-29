@@ -36,9 +36,8 @@ jobs:
 
   deploy:
     docker:
-      - image: cimg/base:2024.09
+      - image: cimg/base
     steps:
-      - checkout
       - run:
           name: Install Tomcat
           command: |
@@ -46,7 +45,8 @@ jobs:
             sudo apt-get install -y tomcat9
       - run:
           name: Start Tomcat
-          command: sudo systemctl start tomcat9
+          command: |
+            sudo /opt/tomcat/bin/startup.sh
       - run:
           name: Deploy WAR file to Tomcat
           command: |
@@ -57,7 +57,7 @@ jobs:
       - run:
           name: Check Tomcat Status
           command: |
-            if systemctl status tomcat9; then
+            if ps aux | grep -v grep | grep 'org.apache.catalina.startup.Bootstrap'; then
               echo "Tomcat is running"
             else
               echo "Tomcat is not running"
