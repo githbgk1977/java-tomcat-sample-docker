@@ -47,7 +47,7 @@ jobs:
           name: Start Tomcat Server
           command: |
             ~/tomcat/bin/startup.sh
-            sleep 30  # Wait for Tomcat to start
+            sleep 60  # Wait for Tomcat to start
 
       # Extract the port number from server.xml (defaults to 8080)
       - run:
