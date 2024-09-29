@@ -36,7 +36,7 @@ jobs:
 
   deploy:
     docker:
-      - image: cimg/base:latest
+      - image: cimg/base:2024.09
     steps:
       - run:
           name: Download WAR from JFrog Artifactory
