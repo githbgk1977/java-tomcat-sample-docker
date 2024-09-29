@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: cimg/base:2022.09
+      - image: cimg/cimg/base:2024.09
     steps:
       - checkout
       - setup_remote_docker:
@@ -14,10 +14,10 @@ jobs:
           command: echo "$DOCKER_HUB_PASS" | docker login -u "$DOCKER_HUB_USER" --password-stdin
       - run:
           name: Pull Image
-          command: docker pull cimg/base:2022.09
+          command: docker pull cimg/base:2024.09
       - run:
           name: Tag Image
-          command: docker tag cimg/base:2022.09 $DOCKER_HUB_USER/cimg_base2022.09:latest
+          command: docker tag cimg/base:2024.09 $DOCKER_HUB_USER/cimg_base2024.09:latest
       - run:
           name: Push Image to Docker Hub
           command: docker push $DOCKER_HUB_USER/cimg_base2022.09:latest
