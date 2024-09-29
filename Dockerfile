@@ -1,5 +1,5 @@
 # Use cimg/openjdk:15.0 as the base image
-FROM cimg/openjdk:17.0
+FROM cimg/cimg/base:2024.09
 
 # Install wget
 #RUN apt-get update && apt-get install -y wget
