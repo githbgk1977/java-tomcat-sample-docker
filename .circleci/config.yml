@@ -52,9 +52,9 @@ jobs:
       - run:
           name: Download and Install Tomcat
           command: |
-            wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.70/bin/apache-tomcat-9.0.70.tar.gz
-            tar -xzf apache-tomcat-9.0.70.tar.gz
-            mv apache-tomcat-9.0.70 ~/tomcat  # Move to user directory
+            wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.95/bin/apache-tomcat-9.0.95.tar.gz
+            tar -xzf apache-tomcat-9.0.95.tar.gz
+            mv apache-tomcat-9.0.95 ~/tomcat  # Move to user directory
       - run:
           name: Start Tomcat
           command: |
