@@ -3,7 +3,8 @@ version: 2.1
 executors:
   test-executor:
     docker:
-      - image: cimg/openjdk:15.0  # Use OpenJDK 15 image
+      - image: cimg/openjdk:15.0  # Image for building
+      - image: tomcat:9.0          # Base image for publishing
 
 jobs:
   build_and_push:
@@ -11,120 +12,13 @@ jobs:
     steps:
       - checkout
 
-      - run:
-          name: Check Docker Installation and Version
-          command: |
-            # Check if Docker is installed
-            if command -v docker > /dev/null 2>&1; then
-              echo "Docker is already installed."
-              docker --version
-            else
-              echo "Docker is not installed. Please install Docker."
-              exit 1
-            fi
-
-      - run:
-          name: Detect OS and Start Docker Daemon Without systemd
-          command: |
-            echo "Detecting operating system..."
-
-            OS_TYPE=$(uname -s)
-            case "$OS_TYPE" in
-              Linux)
-                echo "Running on Linux. Checking Docker service status..."
-
-                # Check if Docker daemon is running
-                if ! pgrep -x "dockerd" > /dev/null; then
-                  echo "Docker daemon is not running. Attempting to start Docker without systemd..."
-
-                  # Start Docker daemon in the background (for non-systemd environments)
-                  sudo dockerd --host=unix:///var/run/docker.sock > /dev/null 2>&1 &
-
-                  # Give Docker some time to start
-                  sleep 5
-                fi
-
-                # Validate if Docker is now running
-                if ! pgrep -x "dockerd" > /dev/null; then
-                  echo "Docker daemon failed to start on Linux without systemd. Exiting."
-                  exit 1
-                else
-                  echo "Docker daemon is running on Linux."
-                fi
-                ;;
-              
-              Darwin)
-                echo "Running on macOS. Checking Docker Desktop..."
-
-                # Check if Docker Desktop is running
-                if ! docker info > /dev/null 2>&1; then
-                  echo "Docker Desktop is not running. Attempting to start Docker Desktop on macOS..."
-                  open -a Docker || echo "Failed to start Docker Desktop on macOS."
-                fi
-
-                # Validate if Docker is now running
-                if ! docker info > /dev/null 2>&1; then
-                  echo "Docker Desktop failed to start on macOS. Exiting."
-                  exit 1
-                else
-                  echo "Docker Desktop is running on macOS."
-                fi
-                ;;
-              
-              CYGWIN*|MINGW*|MSYS*)
-                echo "Running on Windows. Checking Docker Desktop..."
-
-                # Check if Docker Desktop is running
-                if ! docker info > /dev/null 2>&1; then
-                  echo "Docker Desktop is not running. Attempting to start Docker Desktop on Windows..."
-                  Start-Process "Docker Desktop" || echo "Failed to start Docker Desktop on Windows."
-                fi
-
-                # Validate if Docker is now running
-                if ! docker info > /dev/null 2>&1; then
-                  echo "Docker Desktop failed to start on Windows. Exiting."
-                  exit 1
-                else
-                  echo "Docker Desktop is running on Windows."
-                fi
-                ;;
-              
-              *)
-                echo "Unknown OS: $OS_TYPE. Cannot start Docker."
-                exit 1
-                ;;
-            esac
-
-      - run:
-          name: Validate Docker Daemon
-          command: |
-            echo "Validating Docker Daemon connection..."
-
-            # Check if Docker is using Unix socket
-            if [ -S /var/run/docker.sock ]; then
-              echo "Docker is using Unix socket."
-            else
-              echo "Docker is NOT using Unix socket. Checking for TCP socket..."
-
-              # Check if Docker daemon is reachable via TCP
-              DOCKER_PORT=2375
-              if curl --silent http://localhost:${DOCKER_PORT}/_ping; then
-                echo "Docker daemon is reachable via TCP socket on port ${DOCKER_PORT}."
-              else
-                echo "Docker daemon is not reachable via TCP. Please check the configuration."
-                exit 1
-              fi
-            fi
-
-            echo "Docker validation completed successfully."
-
+      # Build Docker Image
       - run:
           name: Build Docker Image
           command: |
             echo "Building Docker image..."
-            DOCKER_IMAGE="tomcat:8.0"  # Hardcoded Tomcat base image
-            IMAGE_NAME="java-tomcat-sample" # Name of the image you want to tag
-            DOCKER_TAG="latest"          # Tag for the image
+            IMAGE_NAME="java-tomcat-sample"  # Name of the image
+            DOCKER_TAG="latest"  # Tag for the image
             IMAGE_TAG="${IMAGE_NAME}:${DOCKER_TAG}"  # Tag for the local image
             echo "Final Docker image tag: ${IMAGE_TAG}"
 
