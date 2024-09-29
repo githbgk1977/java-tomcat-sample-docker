@@ -46,7 +46,7 @@ jobs:
       - run:
           name: Start Tomcat
           command: |
-            sudo /opt/tomcat/bin/startup.sh
+            sudo ~/tomcat/bin/startup.sh
       - run:
           name: Deploy WAR file to Tomcat
           command: |
