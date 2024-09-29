@@ -64,11 +64,16 @@ jobs:
           name: Check Tomcat Logs
           command: |
             sleep 60  # Wait for Tomcat to start
-            tail -n 50 ~/tomcat/logs/catalina.out || echo "Unable to read log file"
+            log_file=$(find ~/tomcat -name "catalina.out" 2>/dev/null)  # Find the log file
+            if [ -n "$log_file" ]; then
+              tail -n 50 "$log_file"
+            else
+              echo "catalina.out not found"
+            fi
       - run:
           name: Check Tomcat Status
           command: |
-            sleep 60  # Wait for Tomcat to start
+            sleep 5
             curl -f http://localhost:8080 || echo "Tomcat not responding"
 
 
