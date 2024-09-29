@@ -78,6 +78,17 @@ jobs:
               echo "Tomcat is not listening on port $TOMCAT_PORT" && exit 1
             fi
 
+      # Check Tomcat Logs for Errors
+      - run:
+          name: Check Tomcat Logs
+          command: |
+            if [ -f ~/tomcat/logs/catalina.out ]; then
+              echo "Checking Tomcat startup logs for errors..."
+              tail -n 50 ~/tomcat/logs/catalina.out
+            else
+              echo "Tomcat log file not found."
+            fi
+
       # Verify Tomcat is accessible via curl
       - run:
           name: Verify Tomcat Access
