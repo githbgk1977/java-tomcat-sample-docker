@@ -47,7 +47,7 @@ jobs:
           name: Start Tomcat Server
           command: |
             ~/tomcat/bin/startup.sh
-            sleep 10  # Wait for Tomcat to start
+            sleep 30  # Wait for Tomcat to start
 
       # Capture Tomcat status using curl
       - run:
