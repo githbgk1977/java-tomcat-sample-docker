@@ -54,17 +54,36 @@ jobs:
           name: Extract Tomcat Port
           command: |
             export TOMCAT_PORT=$(grep -oP 'port="\K\d+' ~/tomcat/conf/server.xml | head -1)
-            echo "Tomcat is running on port: $TOMCAT_PORT"
+            echo "Tomcat is configured to run on port: $TOMCAT_PORT"
             echo $TOMCAT_PORT > tomcat_port.txt  # Save to file for later use
 
-      # Verify Tomcat is running and curl the port dynamically
+      # Verify if Tomcat is running
       - run:
-          name: Capture Tomcat Status
+          name: Check if Tomcat is Running
+          command: |
+            if ps -ef | grep '[t]omcat'; then
+              echo "Tomcat is running"
+            else
+              echo "Tomcat is not running" && exit 1
+            fi
+
+      # Check if Tomcat is listening on the captured port
+      - run:
+          name: Check if Tomcat is Listening on Port
           command: |
             export TOMCAT_PORT=$(cat tomcat_port.txt)
-            netstat -tuln | grep $TOMCAT_PORT || echo "Port $TOMCAT_PORT not found"
-            curl -I http://localhost:$TOMCAT_PORT > tomcat_status.txt || echo "Tomcat not started on port $TOMCAT_PORT."
-            cat tomcat_status.txt  # Print the status to CircleCI output
+            if netstat -tuln | grep ":$TOMCAT_PORT"; then
+              echo "Tomcat is listening on port $TOMCAT_PORT"
+            else
+              echo "Tomcat is not listening on port $TOMCAT_PORT" && exit 1
+            fi
+
+      # Verify Tomcat is accessible via curl
+      - run:
+          name: Verify Tomcat Access
+          command: |
+            export TOMCAT_PORT=$(cat tomcat_port.txt)
+            curl -I http://localhost:$TOMCAT_PORT || echo "Failed to connect to Tomcat on port $TOMCAT_PORT."
 
 workflows:
   version: 2
