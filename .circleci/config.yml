@@ -3,27 +3,86 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: cimg/cimg/base:2024.09
+      - image: githbgk/cimg_base2022.09  # Using your specified Docker image
+    working_directory: ~/repo
+
     steps:
       - checkout
-      - setup_remote_docker:
-          #version: 2.24.5  # Specify the Docker version you want to use
-          docker_layer_caching: true  # Optional: speeds up builds by caching layers
+
+      # Install necessary tools like Maven, wget, curl
       - run:
-          name: Login to Docker Hub
-          command: echo "$DOCKER_HUB_PASS" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+          name: Install Required Tools
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y maven wget curl
+
+      # Verify the installation of Java
       - run:
-          name: Pull Image
-          command: docker pull cimg/base:2024.09
+          name: Verify Java Installation
+          command: java -version
+
+      # Build the application using Maven
       - run:
-          name: Tag Image
-          command: docker tag cimg/base:2024.09 $DOCKER_HUB_USER/cimg_base2024.09:latest
+          name: Build the Application
+          command: mvn clean package
+
       - run:
-          name: Push Image to Docker Hub
-          command: docker push $DOCKER_HUB_USER/cimg_base2022.09:latest
+          name: Upload WAR to JFrog Artifactory
+          command: |
+            curl -X PUT "https://demojfrog1.jfrog.io/artifactory/tomcatapp/myapp.war" \
+            -H "X-JFrog-Art-Api: ${JFROG_TOKEN}" \
+            -H "Content-Type: application/java-archive" \
+            --data-binary @target/myapp.war
+
+  deploy:
+    docker:
+      - image: githbgk/cimg_base2022.09  # Using the same Docker image for consistency
+    steps:
+      # Install necessary tools
+      - run:
+          name: Install Required Tools
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y wget openjdk-11-jdk  # Install OpenJDK 11
+      - run:
+          name: Set JAVA_HOME
+          command: |
+            echo "export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64" >> $BASH_ENV
+            echo "export JRE_HOME=$JAVA_HOME" >> $BASH_ENV
+            echo "export PATH=\$PATH:\$JAVA_HOME/bin" >> $BASH_ENV
+            source $BASH_ENV  # Source the environment variables
+      - run:
+          name: Download and Install Tomcat
+          command: |
+            wget https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.95/bin/apache-tomcat-9.0.95.tar.gz
+            tar -xzf apache-tomcat-9.0.95.tar.gz
+            mv apache-tomcat-9.0.95 ~/tomcat  # Move to user directory
+      - run:
+          name: Start Tomcat
+          command: |
+            cd ~/tomcat/bin
+            ./catalina.sh start
+      - run:
+          name: Check Tomcat Logs
+          command: |
+            sleep 60  # Wait for Tomcat to start
+            log_file=$(find ~/tomcat -name "catalina.out" 2>/dev/null)  # Find the log file
+            if [ -n "$log_file" ]; then
+              tail -n 50 "$log_file"
+            else
+              echo "catalina.out not found"
+            fi
+      - run:
+          name: Check Tomcat Status
+          command: |
+            sleep 5
+            curl -f http://localhost:8080 || echo "Tomcat not responding"
 
 workflows:
   version: 2
-  build_and_push:
+  build_and_deploy:
     jobs:
       - build
+      - deploy:
+          requires:
+            - build
