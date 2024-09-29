@@ -3,7 +3,7 @@ version: 2.1
 executors:
   test-executor:
     docker:
-      - image: cimg/openjdk:15.0  # Use OpenJDK 15 image
+      - image: genepattern/docker-openjdk_11  # Use Docker image with OpenJDK 11
 
 jobs:
   build_and_push:
@@ -12,38 +12,39 @@ jobs:
       - checkout
 
       - run:
-          name: Install Docker
+          name: Validate Docker, Maven, and OpenJDK
           command: |
-            echo "Updating package list..."
-            sudo apt-get update
+            # Check Docker installation
+            if command -v docker &> /dev/null; then
+              echo "Docker is already installed. Skipping installation..."
+              docker --version
+            else
+              echo "Docker is not installed. Installing Docker..."
+              sudo apt-get update
+              sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+              sudo apt-get update
+              sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+            fi
 
-            # Install Docker prerequisites
-            echo "Installing Docker prerequisites..."
-            sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+            # Check Maven installation
+            if command -v mvn &> /dev/null; then
+              echo "Maven is installed."
+              mvn -version
+            else
+              echo "Maven is not installed. Installing Maven..."
+              sudo apt-get install -y maven
+            fi
 
-            # Add Docker's official GPG key
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-
-            # Set up the stable repository for Docker
-            echo "Setting up Docker repository..."
-            echo \
-              "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-              $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-            # Update the package index
-            echo "Updating package index..."
-            sudo apt-get update
-
-            # Install Docker
-            echo "Installing Docker..."
-            sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-
-            # Verify Docker installation
-            echo "Verifying Docker installation..."
-            docker --version
-
-            # Start Docker service if not running
-            sudo systemctl start docker || echo "Docker is already running."
+            # Check OpenJDK installation
+            if java -version &> /dev/null; then
+              echo "OpenJDK is installed."
+              java -version
+            else
+              echo "OpenJDK is not installed. Please check your base image."
+              exit 1
+            fi
 
       - run:
           name: Validate Docker Daemon
@@ -51,7 +52,13 @@ jobs:
             # Check if Docker is using Unix socket or TCP
             echo "Validating Docker Daemon connection..."
 
-            # Check the Docker daemon configuration
+            # Check if Docker is running
+            if ! sudo systemctl is-active --quiet docker; then
+              echo "Docker is not running. Attempting to start Docker..."
+              sudo systemctl start docker || echo "Docker is already running."
+            fi
+
+            # Check if Docker is using Unix socket or TCP
             if [ -S /var/run/docker.sock ]; then
               echo "Docker is using Unix socket."
             else
@@ -64,7 +71,8 @@ jobs:
               fi
             fi
 
-            echo "Docker validation completed successfully."
+            # Display Docker version
+            docker --version
 
       - run:
           name: Build Docker Image
