@@ -17,10 +17,10 @@ jobs:
           command: docker pull cimg/base:2022.09
       - run:
           name: Tag Image
-          command: docker tag cimg/base:2022.09 your-dockerhub-username/your-image-name:latest
+          command: docker tag cimg/base:2022.09 $DOCKER_HUB_USER/cimg_base2022.09:latest
       - run:
           name: Push Image to Docker Hub
-          command: docker push $DOCKER_HUB_USER/cimg/base:2022.09:latest
+          command: docker push $DOCKER_HUB_USER/cimg_base2022.09:latest
 
 workflows:
   version: 2
