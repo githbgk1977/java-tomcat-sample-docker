@@ -85,6 +85,7 @@ jobs:
             if [ -f ~/tomcat/logs/catalina.out ]; then
               echo "Checking Tomcat startup logs for errors..."
               tail -n 100 ~/tomcat/logs/catalina.out
+              sleep 60  # Wait for Tomcat to start
             else
               echo "Tomcat log file not found."
             fi
@@ -105,6 +106,11 @@ jobs:
           command: |
             export TOMCAT_PORT=$(cat tomcat_port.txt)
             curl -I http://localhost:$TOMCAT_PORT || echo "Failed to connect to Tomcat on port $TOMCAT_PORT."
+      - run:
+          name: Verify Tomcat Access
+          command: |
+            sleep 10
+            curl -I http://localhost:8080 || echo "Failed to connect to Tomcat on port $TOMCAT_PORT."
 
 workflows:
   version: 2
