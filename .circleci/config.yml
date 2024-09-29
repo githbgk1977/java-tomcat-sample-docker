@@ -33,3 +33,53 @@ jobs:
             -H "X-JFrog-Art-Api: ${JFROG_TOKEN}" \
             -H "Content-Type: application/java-archive" \
             --data-binary @target/myapp.war
+
+  deploy:
+    docker:
+      - image: cimg/base:latest
+    steps:
+      - run:
+          name: Download WAR from JFrog Artifactory
+          command: |
+            curl -X GET "https://demojfrog1.jfrog.io/artifactory/tomcatapp/myapp.war" \
+            -H "X-JFrog-Art-Api: ${JFROG_TOKEN}" \
+            -o myapp.war
+
+      - run:
+          name: Install Tomcat
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y tomcat
+
+      - run:
+          name: Deploy WAR File to Tomcat
+          command: |
+            sudo cp myapp.war /var/lib/tomcat/webapps/
+
+      - run:
+          name: Start Tomcat
+          command: |
+            sudo systemctl start tomcat
+
+      - run:
+          name: Wait for Tomcat to Start
+          command: sleep 60
+
+      - run:
+          name: Check Tomcat Status
+          command: |
+            if curl -I http://localhost:8080/myapp; then
+              echo "Tomcat is up and running!";
+            else
+              echo "Tomcat is not responding!";
+              exit 1;
+            fi
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
