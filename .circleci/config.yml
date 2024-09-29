@@ -61,6 +61,11 @@ jobs:
             cd ~/tomcat/bin
             ./catalina.sh start
       - run:
+          name: Check Tomcat Logs
+          command: |
+            sleep 60  # Wait for Tomcat to start
+            tail -n 50 ~/tomcat/logs/catalina.out || echo "Unable to read log file"
+      - run:
           name: Check Tomcat Status
           command: |
             sleep 60  # Wait for Tomcat to start
