@@ -46,11 +46,11 @@ jobs:
       - run:
           name: Start Tomcat
           command: |
-            /opt/tomcat/bin/startup.sh
+            ~/tomcat/bin/startup.sh
       - run:
           name: Deploy WAR file to Tomcat
           command: |
-            cp target/your-app.war /opt/tomcat/webapps/
+            cp target/your-app.war ~/tomcat/webapps/
       - run:
           name: Wait for Tomcat to start
           command: sleep 60
