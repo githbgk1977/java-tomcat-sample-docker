@@ -84,7 +84,17 @@ jobs:
           command: |
             if [ -f ~/tomcat/logs/catalina.out ]; then
               echo "Checking Tomcat startup logs for errors..."
-              tail -n 50 ~/tomcat/logs/catalina.out
+              tail -n 100 ~/tomcat/logs/catalina.out
+            else
+              echo "Tomcat log file not found."
+            fi
+      # Check Tomcat Logs for Errors
+      - run:
+          name: Check Tomcat Logs
+          command: |
+            if [ -f ~/tomcat/logs/catalina.out ]; then
+              echo "Checking Tomcat startup logs for errors..."
+              tail -n 100 ~/tomcat/logs/catalina.out
             else
               echo "Tomcat log file not found."
             fi
