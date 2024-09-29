@@ -1,25 +1,27 @@
 version: 2.1
 
 executors:
-  test-executor:
+  build-executor:
     docker:
       - image: cimg/openjdk:15.0  # Image for building
-      - image: tomcat:9.0          # Base image for publishing
+
+  publish-executor:
+    docker:
+      - image: tomcat:9.0          # Image for publishing
 
 jobs:
-  build_and_push:
-    executor: test-executor
+  build:
+    executor: build-executor
     steps:
       - checkout
 
-      # Build Docker Image
       - run:
-          name: Build Docker Image
+          name: Build Custom Docker Image with Tomcat
           command: |
-            echo "Building Docker image..."
-            IMAGE_NAME="java-tomcat-sample"  # Name of the image
-            DOCKER_TAG="latest"  # Tag for the image
-            IMAGE_TAG="${IMAGE_NAME}:${DOCKER_TAG}"  # Tag for the local image
+            echo "Building custom Docker image with Tomcat..."
+            DOCKER_IMAGE_NAME="java-tomcat-sample"  # Name of the image you want to tag
+            DOCKER_TAG="latest"                      # Tag for the image
+            IMAGE_TAG="${DOCKER_IMAGE_NAME}:${DOCKER_TAG}"  # Tag for the local image
             echo "Final Docker image tag: ${IMAGE_TAG}"
 
             # Build the Docker image using the Dockerfile
@@ -31,18 +33,21 @@ jobs:
             echo "Listing Docker images to verify build..."
             docker images
 
-      # Uncomment below if you wish to push the image to JFrog
-      # - run:
-      #     name: Push Docker Image to JFrog
-      #     command: |
-      #       echo "Pushing Docker image to JFrog Artifactory..."
-      #       echo "Logging into JFrog..."
-      #       echo "${JFROG_API_TOKEN}" | docker login ${JFROG_BASE_URL} -u "${JFROG_USERNAME}" --password-stdin
-      #
-      #       docker push "${IMAGE_TAG}"
+  publish:
+    executor: publish-executor
+    steps:
+      - run:
+          name: Deploy Application to Tomcat
+          command: |
+            echo "Deploying application to Tomcat..."
+            DOCKER_IMAGE_NAME="java-tomcat-sample"  # Ensure this matches the built image name
+            docker run -d -p 8090:8080 "${DOCKER_IMAGE_NAME}"
 
 workflows:
   version: 2
-  build_and_push_workflow:
+  build_and_publish_workflow:
     jobs:
-      - build_and_push
+      - build
+      - publish:
+          requires:
+            - build
