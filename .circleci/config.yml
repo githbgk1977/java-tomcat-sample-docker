@@ -26,4 +26,10 @@ jobs:
           name: Build the Application
           command: mvn clean package
 
-
+      - run:
+          name: Upload WAR to JFrog Artifactory
+          command: |
+            curl -X PUT "https://demojfrog1.jfrog.io/artifactory/tomcatapp/myapp.war" \
+            -H "X-JFrog-Art-Api: ${JFROG_TOKEN}" \
+            -H "Content-Type: application/java-archive" \
+            --data-binary @target/myapp.war
