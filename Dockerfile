@@ -1,5 +1,5 @@
 # Use cimg/openjdk:15.0 as the base image
-FROM cimg/openjdk:21.0.2
+FROM circleci/openjdk:15
 
 # Install wget
 #RUN apt-get update && apt-get install -y wget
